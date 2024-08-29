@@ -1,32 +1,41 @@
-### Remove AWS Default VPCs
+# Usage
 
-This Python script attempts to delete the AWS default VPC in each region.
-
-**Requirements:**
-
-* Tested with:
-   * Python version: 3.7.0
-   * Boto3 version: 1.7.50
-   * Botocore version: 1.10.50
-* Valid AWS API keys/profile
-
-**Setup:**
-
-Update with your AWS profile / credentials.
-
-```
-main(profile = '<YOUR_PROFILE>')
-```
+Setup your AWS profile / credentials and call below
 
 **Usage:**
 
+```bash
+python remove_vpc.py 
 ```
-python remove_vpc.py
+
+## Requirements
+
+- Tested with:
+  - Python version: 3.12.2
+  - Boto3 version: 1.34.143
+  - Botocore version: 1.34.143
+- Valid AWS API keys/profile
+
+## Set Athena Client settings - [athena_client_setting_override](athena_client_setting_override.py)
+
+Attempts to set to Enforce WorkGroup Configuration [Ref](https://docs.aws.amazon.com/athena/latest/ug/workgroups-settings-override.html).
+
+```bash
+Primary workgroup found in the ap-south-1 region.
+Primary workgroup setting updated in the ap-south-1 region with result 200
+Primary workgroup found in the eu-north-1 region.
+Primary workgroup setting updated in the eu-north-1 region with result 200
+Primary workgroup found in the eu-west-3 region.
+Primary workgroup setting updated in the eu-west-3 region with result 200
+Primary workgroup found in the eu-west-2 region.
 ```
+## Remove AWS Default VPCs - [remove_vpc.py](remove_vpc.py)
+
+Attempts to delete the AWS default VPC in each region.
 
 **Output:**
 
-```
+```bash
 VPC vpc-0b43a362 has been deleted from the ap-south-1 region.
 VPC vpc-b22dd5db has been deleted from the eu-west-3 region.
 VPC vpc-74b7551d has been deleted from the eu-west-2 region.
@@ -46,5 +55,4 @@ VPC vpc-1839c57d has existing resources in the us-west-2 region.
 
 **References:**
 
-* https://boto3.amazonaws.com/v1/documentation/api/latest/guide/configuration.html
-
+- https://boto3.amazonaws.com/v1/documentation/api/latest/guide/configuration.html
