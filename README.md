@@ -5,7 +5,7 @@ Setup your AWS profile / credentials and call below
 **Usage:**
 
 ```bash
-python remove_vpc.py 
+python remove_vpc.py -p dev
 ```
 
 ## Requirements
