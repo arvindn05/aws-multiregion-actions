@@ -3,6 +3,57 @@ import argparse
 import boto3
 from botocore.exceptions import ClientError
 
+def collect_resources(ec2, vpc_id, region):
+    """
+    Gather and print resources to be deleted.
+    Returns a dict of resources for later use.
+    """
+    resources = {}
+
+    # Internet Gateway
+    igw = ec2.describe_internet_gateways(
+        Filters=[{"Name": "attachment.vpc-id", "Values": [vpc_id]}]
+    ).get("InternetGateways", [])
+    resources["InternetGateways"] = [{"InternetGatewayId": i["InternetGatewayId"]} for i in igw]
+
+    # Subnets
+    subs = ec2.describe_subnets(Filters=[{"Name": "vpc-id", "Values": [vpc_id]}]).get("Subnets", [])
+    resources["Subnets"] = [{"SubnetId": s["SubnetId"], "CidrBlock": s["CidrBlock"]} for s in subs]
+
+    # Route Tables
+    rtbs = ec2.describe_route_tables(Filters=[{"Name": "vpc-id", "Values": [vpc_id]}]).get("RouteTables", [])
+    resources["RouteTables"] = [{"RouteTableId": r["RouteTableId"]} for r in rtbs if not any(a.get("Main", False) for a in r["Associations"])]
+
+    # Network ACLs
+    acls = ec2.describe_network_acls(Filters=[{"Name": "vpc-id", "Values": [vpc_id]}]).get("NetworkAcls", [])
+    resources["NetworkAcls"] = [{"NetworkAclId": a["NetworkAclId"]} for a in acls if not a["IsDefault"]]
+
+    # Security Groups
+    sgps = ec2.describe_security_groups(Filters=[{"Name": "vpc-id", "Values": [vpc_id]}]).get("SecurityGroups", [])
+    resources["SecurityGroups"] = [{"GroupId": s["GroupId"], "GroupName": s["GroupName"]} for s in sgps if s["GroupName"] != "default"]
+
+    print(f"\nResources in VPC {vpc_id} ({region}):")
+    for k, v in resources.items():
+        print(f"  {k}:")
+        if v:
+            for entry in v:
+                print(f"    {entry}")
+        else:
+            print("    None found")
+    print(f"\nResources in VPC {vpc_id} ({region}):")
+
+    return resources
+
+def prompt_continue():
+    while True:
+        user_input = input("Proceed with deleting these resources? [yes/NO]: ").strip().lower()
+        if user_input in ("yes", "y"):
+            return True
+        elif user_input in ("no", "n", ""):
+            return False
+        else:
+            print("Please enter yes or no.")
+
 
 def delete_igw(ec2, vpc_id):
     """
@@ -219,6 +270,11 @@ def main(profile):
 
         if eni:
             print(f'VPC {vpc_id} has existing resources in the {region} region.')
+            continue
+
+        resources = collect_resources(ec2, vpc_id, region)
+        if not prompt_continue():
+            print(f"Skipping VPC {vpc_id} in region {region}.\n")
             continue
 
         result = delete_igw(ec2, vpc_id)
